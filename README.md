@@ -115,6 +115,7 @@ Also from the same team: **[ArcFit.dev](https://arcfit.dev)**, deterministic arc
 - [Why ESLOG?](#why-eslog)
 - [Features](#features)
 - [Which build should I use?](#which-build-should-i-use)
+- [Get the Release](#get-the-release)
 - [Installation](#installation)
 - [Quick Start](#quick-start)
 - [API](#api)
@@ -163,6 +164,34 @@ ESLOG checks the numeric threshold at the start of each level method. A disabled
 | Best for | Running or including after the ESON facade is loaded | `$.evalFile` or inclusion in an existing ESON-enabled ExtendScript engine |
 
 **Rule of thumb:** both artifacts use the same facade; choose the filename that fits the host loader.
+
+---
+
+## Get the Release
+
+<div align="center">
+
+**All production bundles ship as GitHub release assets — this repo holds
+sources. Grab the runnable builds from the
+[Releases page](https://github.com/thelabcorner/es-log/releases).**
+
+[![Latest release](https://img.shields.io/github/v/release/thelabcorner/es-log?display_name=tag)](https://github.com/thelabcorner/es-log/releases/latest)
+[![Release date](https://img.shields.io/github/release-date/thelabcorner/es-log)](https://github.com/thelabcorner/es-log/releases/latest)
+[![Downloads](https://img.shields.io/github/downloads/thelabcorner/es-log/total)](https://github.com/thelabcorner/es-log/releases)
+
+</div>
+
+**How it works, in three steps:**
+
+1. Open the [Releases page](https://github.com/thelabcorner/es-log/releases).
+2. Pick the **latest stable** tag.
+3. Download the asset that matches your use case:
+
+| You are... | Take this release | And this asset |
+|---|---|---|
+| Loading ESLOG after ESON in an Adobe ExtendScript host | Latest stable | `ESLOG.jsx` |
+| Using the vendor-named ExtendScript artifact | Latest stable | `vendor-eslog.js` |
+| Consuming the development/reference core from Node tooling | Latest stable | `eslog-core.esm.mjs` |
 
 ---
 
