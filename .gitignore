@@ -1,0 +1,7 @@
+node_modules/
+dist/
+.npm-cache/
+.idea/
+*.log
+tests/.eslog-live-probe.jsx
+tests/.eslog-benchmark-probe.jsx

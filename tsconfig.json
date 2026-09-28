@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "target": "ES5",
+    "module": "ESNext",
+    "strict": true,
+    "noEmit": true,
+    "lib": ["ES5"],
+    "skipLibCheck": true,
+    "moduleResolution": "node",
+    "noImplicitAny": true
+  },
+  "include": ["src/**/*.ts"]
+}

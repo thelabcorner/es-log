@@ -1,0 +1,60 @@
+{
+  "name": "eslog",
+  "version": "0.1.0",
+  "description": "Bounded structured logging and text/JSONL sinks for Adobe ExtendScript (ES3)",
+  "type": "module",
+  "main": "dist/eslog-core.esm.mjs",
+  "types": "src/index.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "import": "./dist/eslog-core.esm.mjs"
+    }
+  },
+  "files": [
+    "dist/ESLOG.jsx",
+    "dist/vendor-eslog.js",
+    "dist/eslog-core.esm.mjs",
+    "src/",
+    "tests/benchmark.mjs",
+    "tests/eslog-benchmark-live.mjs",
+    "tests/eslog-live-verify.mjs",
+    "tests/eslog-test.mjs",
+    "tests/fuzz.mjs",
+    "eslog-build.mjs",
+    "extendscript.estc.config.mjs",
+    "extendscript.vendor.estc.config.mjs",
+    "README.md",
+    "LICENSE",
+    "package.json",
+    "tsconfig.json"
+  ],
+  "scripts": {
+    "build": "node eslog-build.mjs",
+    "test": "node tests/eslog-test.mjs",
+    "typecheck": "npx tsc --noEmit -p .",
+    "fuzz": "node tests/fuzz.mjs",
+    "benchmark": "node tests/benchmark.mjs",
+    "benchmark:engine": "node tests/eslog-benchmark-live.mjs",
+    "live-verify": "node tests/eslog-live-verify.mjs",
+    "estc:static": "node ../extendscript-toolchain/bin/estc.mjs check dist/ESLOG.jsx dist/vendor-eslog.js --no-target",
+    "estc:live-parse": "node ../extendscript-toolchain/bin/estc.mjs check dist/ESLOG.jsx dist/vendor-eslog.js --no-target --live",
+    "verify": "npm run typecheck && npm run build && npm test && npm run fuzz && npm run estc:static",
+    "release:gate": "npm run verify && npm run estc:live-parse && npm run live-verify",
+    "verify:engine": "npm run estc:live-parse && npm run live-verify",
+    "ci:static": "npm run verify",
+    "ci:local": "npm run ci:static && npm run verify:engine"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.2",
+    "typescript": "5.9.3"
+  },
+  "license": "GPL-3.0-or-later",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/thelabcorner/es-log.git"
+  }
+}
