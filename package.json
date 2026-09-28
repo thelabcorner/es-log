@@ -48,6 +48,9 @@
   "engines": {
     "node": ">=20.0.0"
   },
+  "peerDependencies": {
+    "eson": "^1.2.2"
+  },
   "devDependencies": {
     "esbuild": "0.28.2",
     "typescript": "5.9.3"

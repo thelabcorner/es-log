@@ -1,66 +1,24 @@
 import { LogField, LogFormat, LogRecord, LogValue } from './types';
 
-var ESCAPABLE = /["\\\x00-\x1f\u2028\u2029\ud800-\udfff]/g;
-var HEX = '0123456789abcdef';
+declare var ESON: { stringify(value: any): string | undefined };
 
-function hex4(code: number): string {
-  var a = Math.floor(code / 4096);
-  var rest = code - a * 4096;
-  var b = Math.floor(rest / 256);
-  rest = rest - b * 256;
-  var c = Math.floor(rest / 16);
-  var d = rest - c * 16;
-  return HEX.charAt(a) + HEX.charAt(b) + HEX.charAt(c) + HEX.charAt(d);
-}
-
-function escapeUnit(unit: string): string {
-  var code = unit.charCodeAt(0);
-  if (code === 34) {
-    return '\\"';
+function stringifyJson(value: any): string {
+  if (typeof ESON === 'undefined' || ESON === null || typeof ESON.stringify !== 'function') {
+    throw new Error('ESLOG: ESON.stringify must be loaded before JSON/JSONL serialization');
   }
-  if (code === 92) {
-    return '\\\\';
+  var result = ESON.stringify(value);
+  if (typeof result !== 'string') {
+    throw new Error('ESLOG: ESON.stringify did not return a JSON string');
   }
-  if (code === 8) {
-    return '\\b';
-  }
-  if (code === 9) {
-    return '\\t';
-  }
-  if (code === 10) {
-    return '\\n';
-  }
-  if (code === 12) {
-    return '\\f';
-  }
-  if (code === 13) {
-    return '\\r';
-  }
-  return '\\u' + hex4(code);
+  return result;
 }
 
 export function quoteJsonString(value: string): string {
-  var replacer: any = escapeUnit;
-  return '"' + value.replace(ESCAPABLE, replacer) + '"';
+  return stringifyJson(value);
 }
 
 export function renderJsonValue(value: LogValue): string {
-  if (value === null) {
-    return 'null';
-  }
-  if (typeof value === 'string') {
-    return quoteJsonString(value);
-  }
-  if (typeof value === 'boolean') {
-    if (value) {
-      return 'true';
-    }
-    return 'false';
-  }
-  if (value === 0) {
-    return '0';
-  }
-  return String(value);
+  return stringifyJson(value);
 }
 
 function renderFields(fields: LogRecord['fields']): string {

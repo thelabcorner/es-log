@@ -142,25 +142,25 @@ ESLOG checks the numeric threshold at the start of each level method. A disabled
 
 - Six severity methods: `trace`, `debug`, `info`, `warn`, `error`, and `fatal`; `off` is an available threshold.
 - `logf(level, template, args)` substitutes `{}` placeholders only after the threshold passes; `logLazy(level, factory, fields?)` defers message construction and field acquisition.
-- Text and JSONL rendering escape control characters, sort fields by key, and use one rendering for the entire fanout.
+- JSON string and scalar encoding delegates to ESON's `stringify`; ESLOG retains the fixed record layout, sorted fields, and one-line JSONL framing.
 - Sink fanout is capped at 16 sinks per logger. Sink exceptions are isolated; the last event's failure summaries contain at most 16 bounded entries.
 - `createMemorySink(capacity)` retains at most 4,096 record/text pairs; the default capacity is 256.
 - Message text is capped at 8,192 code units, string field values at 256, field keys at 64, and fields at 16 per record. Oversize message/value strings are truncated with `...`; invalid/duplicate/NUL-bearing field keys throw.
 - Field values are scalar JSON values only. Non-finite field numbers normalize to `null`; negative zero renders as `0`.
 - `AppendSinkIO.append(path, text)` is the small caller-supplied append port. ESLOG contains no filesystem package adapter or ESFS runtime dependency.
-- The core uses no native code, persistent prototype patches, ES* runtime imports, message memoization, or unbounded property keys.
+- The core uses no native code, persistent prototype patches, message memoization, or unbounded property keys. ESON is the sole ES* runtime dependency and owns JSON string/scalar serialization.
 
 ---
 
 ## Which build should I use?
 
-| | **Standalone JSX** | **Vendor JavaScript** |
+| | **ESLOG JSX** | **Vendor JavaScript** |
 |---|---|---|
 | File | `dist/ESLOG.jsx` | `dist/vendor-eslog.js` |
-| Size | 13,009 bytes | 13,009 bytes |
+| Size | 12,578 bytes | 12,578 bytes |
 | API | Installs `$.global.ESLOG` | Installs `$.global.ESLOG` |
 | Installs `ESLOG` | Yes | Yes |
-| Best for | Running or including from an Illustrator script | `$.evalFile` or inclusion in an existing ExtendScript engine |
+| Best for | Running or including after the ESON facade is loaded | `$.evalFile` or inclusion in an existing ESON-enabled ExtendScript engine |
 
 **Rule of thumb:** both artifacts use the same facade; choose the filename that fits the host loader.
 
@@ -175,7 +175,7 @@ npm ci
 npm run build
 ```
 
-The two ExtendScript artifacts are emitted under `dist/`. The Node ESM build is `dist/eslog-core.esm.mjs`. The ExtendScript entry installs `ESLOG` on `$.global`; the TypeScript/Node core exports `createLogger` and sink factories as modules.
+The two ExtendScript artifacts are emitted under `dist/`. The Node ESM build is `dist/eslog-core.esm.mjs`. The ExtendScript entry installs `ESLOG` on `$.global`; the TypeScript/Node core exports `createLogger` and sink factories as modules. Logging requires ESON to be loaded first because text mode also quotes strings through ESON: load `eson/dist/ESON.jsx` (the standalone facade) before `ESLOG.jsx` or `vendor-eslog.js`. This full facade publishes `ESON` and does not patch global `JSON`.
 
 ---
 
@@ -223,6 +223,8 @@ An append integration supplies only `append(path, text)` and chooses either `cre
 
 `LogField` is `{ key: string, value: string | number | boolean | null }`. Pass caller-owned plain arrays and field records; host collections, arbitrary objects, accessors, cycles, and nested containers are not reflected or serialized.
 
+All formats call `ESON.stringify` for quoted strings; JSONL also delegates scalar encoding to ESON. If the ESON facade is not loaded, the first enabled event throws an explicit dependency error.
+
 ---
 
 ## Validation
@@ -230,14 +232,14 @@ An append integration supplies only `append(path, text)` and chooses either `cre
 | Check | Command | Result |
 |---|---|---|
 | TypeScript typecheck | `npm run typecheck` | pass |
-| ESTC build | `npm run build` | `ESLOG.jsx` and `vendor-eslog.js`, 13,009 bytes each; no compatibility warnings |
-| Behavioral tests | `npm test` | 12 case groups pass |
+| ESTC build | `npm run build` | `ESLOG.jsx` and `vendor-eslog.js`, 12,578 bytes each; no compatibility warnings |
+| Behavioral tests | `npm test` | 14 case groups pass, including ESON delegation and missing-dependency behavior |
 | Seeded JSONL fuzz | `npm run fuzz` | 20,000 generated records parsed by Node `JSON.parse`; seed `0x5e10` |
 | Static ES3 artifact checks | `npm run estc:static` | both artifacts pass Acorn ES3 checks |
 | Live compile-only parse | `npm run estc:live-parse` | both artifacts pass in Illustrator 30.6.0 / ExtendScript 4.5.6 via COMTool Node SDK |
-| Live behavior | `npm run live-verify` | 9/9 checks pass in Illustrator 30.6.0 / ExtendScript 4.5.6 via COMTool V2 |
+| Live behavior | `npm run live-verify` | 11/11 checks pass in Illustrator 30.6.0 / ExtendScript 4.5.6 via COMTool V2, with standalone ESON loaded first |
 
-The JSONL oracle is Node's `JSON.parse`; the live lane separately checks the actual ExtendScript behavior and never treats Node compatibility as host evidence.
+The JSONL structural oracle is Node's `JSON.parse`; ESON supplies serialization semantics. The live lane separately checks the actual ExtendScript behavior and never treats Node compatibility as host evidence.
 
 ---
 
@@ -302,7 +304,7 @@ These are inherited workspace observations, not new ESLOG measurements. The cite
 
 - **ESARR — indexed arrays and writes.** ESARR's Illustrator benchmark measured a full 8k indexed-read pass at 47.4 ms and a full write pass at 50.6 ms: the writes were not superlinear in that fixture, while variable-index reads can become the scaling floor. ESLOG keeps its logger-owned fanout small and bounded rather than building an unbounded per-record sink array. Evidence: [ESARR benchmark-rounds-1](https://github.com/thelabcorner/es-arr/blob/main/docs/benchmark-rounds-1.md) and [ESARR README](https://github.com/thelabcorner/es-arr/blob/main/README.md).
 - **ESB64 — many array writes are expensive.** ESB64 measured roughly 15–25 µs per array write in its codec fixture; its original 47k-write path took 1.7 s for 20 KB. This supports measuring output construction in the real engine; it is not a universal claim that every `+=` pattern wins. Evidence: [ESB64 Performance](https://github.com/thelabcorner/es-b64/blob/main/README.md#performance).
-- **ESON — no dependable global JSON and shape-sensitive strings.** ESON records that the conservative engine profile has no usable `JSON` global. ESON's 43 KB stringify measurement was 13.7 ms, while separate ESON workload notes found repeated concatenation effectively quadratic; the later performance catalog records that concat behavior depends on chunk shape and that there is no universal `+=` or array rule. ESLOG therefore owns a bounded scalar JSONL serializer and measures the exact buffer alternatives. Evidence: [ESON measured operations](https://github.com/thelabcorner/eson/blob/main/README.md#eson-vs-json2-the-operators-both-implement) and the workspace [ExtendScript performance reference](https://github.com/thelabcorner/illustrator_scripts/blob/main/agent-skills/extendscript-es3-engine-quirks/references/performance.md#9-string-concatenation-is-shape-sensitive).
+- **ESON — JSON is an explicit runtime dependency.** The conservative ExtendScript profile has no dependable global `JSON`; ESLOG calls the standalone ESON facade instead of carrying a second escaping/stringification implementation. ESON's serialization measurements and the shape-sensitive string-concatenation evidence inform the choice to keep ESLOG's small fixed-layout record assembly separate from JSON token encoding. Evidence: [ESON README](https://github.com/thelabcorner/eson/blob/main/README.md), especially [measured operations](https://github.com/thelabcorner/eson/blob/main/README.md#eson-vs-json2-the-operators-both-implement), and the workspace [ExtendScript performance reference](https://github.com/thelabcorner/illustrator_scripts/blob/main/agent-skills/extendscript-es3-engine-quirks/references/performance.md#9-string-concatenation-is-shape-sensitive).
 - **ESSTR — NUL-safe scanning.** ESSTR measured `charAt()` returning `""` at U+0000 while `charCodeAt()` reads code unit 0 correctly. ESLOG escapes control code units and rejects NUL in field keys; it does not memoize message bodies or use those strings as property keys. Evidence: [ESSTR engine quirks](https://github.com/thelabcorner/es-str/blob/main/README.md#engine-quirks-that-shaped-the-design).
 - **ESCHARS — very large per-unit transforms can wedge.** ESCHARS reproduced a `charCodeAt` + `push`/`join`/`fromCharCode` transform hanging at 128K units while 64K completed. ESLOG caps each message, value, and field count and has no ESCHARS/ESABI/native runtime dependency. Evidence: [ESCHARS engine quirks](https://github.com/thelabcorner/es-chars/blob/main/README.md#engine-quirks-that-shaped-the-design).
 - **ESTIMER — `$.hiresTimer` is a delta source.** ESTIMER's live probe and the current performance reference show that each read consumes the preceding interval; the first read is not a zero baseline, nested reads interfere, and zero deltas can be valid. ESLOG timestamps use `Date().getTime()` only after a level passes; the engine benchmark separately primes `$.hiresTimer` per sample. Evidence: [ESTIMER research probes](https://github.com/thelabcorner/es-timer/blob/main/docs/research-probes.md), [measured facts](https://github.com/thelabcorner/es-timer/blob/main/MEASURED-FACTS.md), and the workspace [timer authority reference](https://github.com/thelabcorner/illustrator_scripts/blob/main/agent-skills/extendscript-es3-engine-quirks/references/performance.md#2-timer-authority).
@@ -352,6 +354,7 @@ eslog/
 - **[docsforadobe](https://github.com/docsforadobe)** and the ExtendScript community for host/runtime documentation and measured engine behavior.
 - **ECMA International** for the ECMAScript 3 grammar baseline used by ESTC.
 - **[ESTC](https://github.com/thelabcorner/estc)** for the shared TypeScript-to-ExtendScript build, static compatibility gate, and live parse path.
+- **[ESON](https://github.com/thelabcorner/eson)** for canonical JSON serialization.
 - **ESARR, ESB64, ESON, ESSTR, ESCHARS, and ESTIMER** for the separately cited inherited engine evidence in this README.
 
 ---

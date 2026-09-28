@@ -1,9 +1,13 @@
 #!/usr/bin/env node
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 import { resolve } from 'node:path';
 
 var core = await import(pathToFileURL(resolve('dist/eslog-core.esm.mjs')).href);
+var eson = await import(pathToFileURL(resolve('../eson/dist/eson-core.esm.mjs')).href);
+eson.install({ json2Source: readFileSync(resolve('../eson/vendor/json2.raw.js'), 'utf8') });
+globalThis.ESON = eson;
 var cases = 0;
 function test(name, fn) {
   fn();
@@ -79,6 +83,37 @@ test('JSONL escapes control characters and parses deterministically', function (
   assert.deepEqual(parsed.fields, { 'bad-number': null, control: '\u0001\u2028', finite: 1.25 });
   assert.equal(text.charAt(text.length - 1), '\n');
   assert.equal(JSON.stringify(parsed), JSON.stringify(JSON.parse(text)));
+});
+
+test('JSON and JSONL token serialization delegates to ESON', function () {
+  var original = globalThis.ESON;
+  var calls = 0;
+  globalThis.ESON = {
+    stringify: function (value) {
+      calls++;
+      return eson.stringify(value);
+    }
+  };
+  try {
+    var memory = core.createMemorySink();
+    var logger = core.createLogger({ format: 'jsonl', clock: function () { return 2; }, sinks: [memory] });
+    logger.info('delegated', [{ key: 'value', value: 1 }]);
+    assert.equal(JSON.parse(memory.getEntries()[0].text).fields.value, 1);
+    assert.equal(calls, 4);
+  } finally {
+    globalThis.ESON = original;
+  }
+});
+
+test('JSON serialization fails clearly when ESON is not loaded', function () {
+  var original = globalThis.ESON;
+  globalThis.ESON = undefined;
+  try {
+    var logger = core.createLogger({ format: 'jsonl', sinks: [core.createMemorySink()], clock: function () { return 1; } });
+    assert.throws(function () { logger.info('missing dependency'); }, /ESON\.stringify must be loaded/);
+  } finally {
+    globalThis.ESON = original;
+  }
 });
 
 test('text rendering remains one physical line and quotes fields', function () {

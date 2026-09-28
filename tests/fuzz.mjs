@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 import { resolve } from 'node:path';
 
@@ -9,6 +10,9 @@ if (!Number.isInteger(iterations) || iterations < 1 || iterations > 1000000) {
   throw new Error('iterations must be an integer in [1, 1000000]');
 }
 var core = await import(pathToFileURL(resolve('dist/eslog-core.esm.mjs')).href);
+var eson = await import(pathToFileURL(resolve('../eson/dist/eson-core.esm.mjs')).href);
+eson.install({ json2Source: readFileSync(resolve('../eson/vendor/json2.raw.js'), 'utf8') });
+globalThis.ESON = eson;
 var current = seed >>> 0;
 function next() {
   current = (Math.imul(current, 1664525) + 1013904223) >>> 0;

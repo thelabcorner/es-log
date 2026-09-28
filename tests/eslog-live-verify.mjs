@@ -8,6 +8,7 @@ import { fileURLToPath } from 'node:url';
 var ROOT = dirname(fileURLToPath(import.meta.url));
 var PROJECT = join(ROOT, '..');
 var VENDOR = join(PROJECT, 'dist', 'vendor-eslog.js');
+var ESON_PATH = join(PROJECT, '..', 'eson', 'dist', 'ESON.jsx');
 var PROBE = join(ROOT, '.eslog-live-probe.jsx');
 var COM = createComToolRunner();
 
@@ -39,6 +40,9 @@ if (!existsSync(VENDOR)) {
       var probe = [
         '#target illustrator',
         '$.global["ESLOG"] = null;',
+        '$.global["ESON"] = null;',
+        '$.evalFile(File("' + ESON_PATH.replace(/\\/g, '/').replace(/"/g, '\\"') + '"));',
+        'var eson = $.global["ESON"];',
         '$.evalFile(File("' + vendorPath + '"));',
         'var api = $.global["ESLOG"];',
         'var report = { engine: $.version, host: app.name + " " + app.version };',
@@ -62,6 +66,8 @@ if (!existsSync(VENDOR)) {
         'isolated.error("isolation");',
         'var fail = isolated.getLastSinkErrors();',
         'report.global = typeof api.createLogger === "function";',
+        'report.esonLoaded = typeof eson === "object" && typeof eson.stringify === "function";',
+        'report.esonUnpatchedJson = JSON.stringify !== eson.stringify;',
         'report.filteredNoWork = timeCalls === 1 && infoCalls === 0;',
         'report.oneTimestamp = timeCalls === 1;',
         'report.sharedRecord = entry.record === observed.record;',
@@ -86,7 +92,7 @@ if (!existsSync(VENDOR)) {
             skip('COMTool V2 returned an unavailable engine result');
           } else {
             var failed = [];
-            var keys = ['global', 'filteredNoWork', 'oneTimestamp', 'sharedRecord', 'sharedText', 'sortedFields', 'escapedNulAndNewline', 'appendOnce', 'errorIsolation'];
+            var keys = ['global', 'esonLoaded', 'esonUnpatchedJson', 'filteredNoWork', 'oneTimestamp', 'sharedRecord', 'sharedText', 'sortedFields', 'escapedNulAndNewline', 'appendOnce', 'errorIsolation'];
             var i = 0;
             for (i = 0; i < keys.length; i++) {
               if (result[keys[i]] !== true) { failed[failed.length] = keys[i]; }
