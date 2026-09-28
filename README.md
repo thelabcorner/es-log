@@ -289,7 +289,7 @@ The core formats scalar values and invokes only sinks explicitly supplied by the
 
 | Target | Status |
 |---|---|
-| Adobe Illustrator 30.6.0 / ExtendScript 4.5.6 | live parse and 9/9 behavior checks pass |
+| Adobe Illustrator 30.6.0 / ExtendScript 4.5.6 | live parse and 11/11 behavior checks pass |
 | ExtendScript ES3 grammar | both emitted artifacts pass ESTC static checks |
 | Adobe InDesign, Photoshop, Bridge, and other ExtendScript hosts | intended ES3-compatible source; live behavior not yet measured on these hosts |
 | Node.js 20+ | ESM development and test lane; `npm run benchmark` is Node-only |
