@@ -1,6 +1,6 @@
 {
   "name": "eslog",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Bounded structured logging and text/JSONL sinks for Adobe ExtendScript (ES3)",
   "type": "module",
   "main": "dist/eslog-core.esm.mjs",
@@ -13,14 +13,20 @@
   },
   "files": [
     "dist/ESLOG.jsx",
+    "dist/ESLOG.facade.jsx",
+    "dist/ESLOG.accel.jsx",
+    "dist/ESLOG.accel.min.jsx",
+    "dist/ESLOG.manifest.json",
     "dist/vendor-eslog.js",
     "dist/eslog-core.esm.mjs",
     "src/",
     "tests/benchmark.mjs",
     "tests/eslog-benchmark-live.mjs",
     "tests/eslog-live-verify.mjs",
+    "tests/eslog-composition-live.mjs",
     "tests/eslog-test.mjs",
     "tests/fuzz.mjs",
+    "evidence/latest-composition-live.json",
     "eslog-build.mjs",
     "extendscript.estc.config.mjs",
     "extendscript.vendor.estc.config.mjs",
@@ -37,11 +43,12 @@
     "benchmark": "node tests/benchmark.mjs",
     "benchmark:engine": "node tests/eslog-benchmark-live.mjs",
     "live-verify": "node tests/eslog-live-verify.mjs",
-    "estc:static": "node ../extendscript-toolchain/bin/estc.mjs check dist/ESLOG.jsx dist/vendor-eslog.js --no-target",
-    "estc:live-parse": "node ../extendscript-toolchain/bin/estc.mjs check dist/ESLOG.jsx dist/vendor-eslog.js --no-target --live",
+    "composition-live": "node tests/eslog-composition-live.mjs",
+    "estc:static": "node ../extendscript-toolchain/bin/estc.mjs check dist/ESLOG.jsx dist/vendor-eslog.js dist/ESLOG.facade.jsx dist/ESLOG.accel.jsx dist/ESLOG.accel.min.jsx --no-target",
+    "estc:live-parse": "node ../extendscript-toolchain/bin/estc.mjs check dist/ESLOG.jsx dist/vendor-eslog.js dist/ESLOG.facade.jsx dist/ESLOG.accel.jsx dist/ESLOG.accel.min.jsx --no-target --live",
     "verify": "npm run typecheck && npm run build && npm test && npm run fuzz && npm run estc:static",
-    "release:gate": "npm run verify && npm run estc:live-parse && npm run live-verify",
-    "verify:engine": "npm run estc:live-parse && npm run live-verify",
+    "release:gate": "npm run verify && npm run estc:live-parse && npm run live-verify && npm run composition-live",
+    "verify:engine": "npm run estc:live-parse && npm run live-verify && npm run composition-live",
     "ci:static": "npm run verify",
     "ci:local": "npm run ci:static && npm run verify:engine"
   },
@@ -49,7 +56,7 @@
     "node": ">=20.0.0"
   },
   "peerDependencies": {
-    "eson": "^1.2.2"
+    "eson": "^1.3.0"
   },
   "devDependencies": {
     "esbuild": "0.28.2",

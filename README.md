@@ -149,21 +149,24 @@ ESLOG checks the numeric threshold at the start of each level method. A disabled
 - Message text is capped at 8,192 code units, string field values at 256, field keys at 64, and fields at 16 per record. Oversize message/value strings are truncated with `...`; invalid/duplicate/NUL-bearing field keys throw.
 - Field values are scalar JSON values only. Non-finite field numbers normalize to `null`; negative zero renders as `0`.
 - `AppendSinkIO.append(path, text)` is the small caller-supplied append port. ESLOG contains no filesystem package adapter or ESFS runtime dependency.
-- The core uses no native code, persistent prototype patches, message memoization, or unbounded property keys. ESON is the sole ES* runtime dependency and owns JSON string/scalar serialization.
+- The core uses no native code, persistent prototype patches, message memoization, or unbounded property keys. ESON is the sole ES* serialization dependency. Standalone ESLOG expects a host-provided ESON facade; the ESPACK v2 distribution resolves and embeds the full `ESB64 -> ESON -> ESLOG` chain automatically.
 
 ---
 
 ## Which build should I use?
 
-| | **ESLOG JSX** | **Vendor JavaScript** |
-|---|---|---|
-| File | `dist/ESLOG.jsx` | `dist/vendor-eslog.js` |
-| Size | 12,578 bytes | 12,578 bytes |
-| API | Installs `$.global.ESLOG` | Installs `$.global.ESLOG` |
-| Installs `ESLOG` | Yes | Yes |
-| Best for | Running or including after the ESON facade is loaded | `$.evalFile` or inclusion in an existing ESON-enabled ExtendScript engine |
+| Artifact | Size | Dependency behavior | Best for |
+|---|---:|---|---|
+| `dist/ESLOG.jsx` | 12,578 B | Requires an already-active ESON facade | Readable standalone/debug use |
+| `dist/vendor-eslog.js` | 12,578 B | Requires an already-active ESON facade | Inclusion in an existing ESON-enabled generated bundle |
+| `dist/ESLOG.accel.jsx` | 273,151 B | ESPACK v2 resolves `ESB64 -> ESON -> ESLOG` and includes ESON's optional native capability | Single-file production distribution with no sibling preload |
+| `dist/ESLOG.accel.min.jsx` | 238,027 B | Same composed dependency graph, conservatively minified after composition | Smaller single-file production distribution |
+| `dist/ESLOG.facade.jsx` | 12,663 B | Loader-free library node; requires ESPAK composition control plane | Input to a larger ESPACK composition |
+| `dist/ESLOG.manifest.json` | 267,597 B | Byte/provenance manifest for the complete transitive graph | Build/composition input, not a runtime include |
 
-**Rule of thumb:** both artifacts use the same facade; choose the filename that fits the host loader.
+**Rule of thumb:** use the composed `ESLOG.accel*.jsx` artifact when ESLOG
+should be self-sufficient. Use the standalone/vendor artifact only when the
+host intentionally owns ESON lifecycle and loads it first.
 
 ---
 
@@ -191,6 +194,8 @@ sources. Grab the runnable builds from the
 |---|---|---|
 | Loading ESLOG after ESON in an Adobe ExtendScript host | Latest stable | `ESLOG.jsx` |
 | Using the vendor-named ExtendScript artifact | Latest stable | `vendor-eslog.js` |
+| Loading ESLOG as one dependency-complete ExtendScript file | Latest stable | `ESLOG.accel.min.jsx` (or readable `ESLOG.accel.jsx`) |
+| Composing ESLOG into a larger ESPACK distribution | Latest stable | `ESLOG.manifest.json` + `ESLOG.facade.jsx` |
 | Consuming the development/reference core from Node tooling | Latest stable | `eslog-core.esm.mjs` |
 
 ---
@@ -204,7 +209,26 @@ npm ci
 npm run build
 ```
 
-The two ExtendScript artifacts are emitted under `dist/`. The Node ESM build is `dist/eslog-core.esm.mjs`. The ExtendScript entry installs `ESLOG` on `$.global`; the TypeScript/Node core exports `createLogger` and sink factories as modules. Logging requires ESON to be loaded first because text mode also quotes strings through ESON: load `eson/dist/ESON.jsx` (the standalone facade) before `ESLOG.jsx` or `vendor-eslog.js`. This full facade publishes `ESON` and does not patch global `JSON`.
+The standalone ExtendScript entry installs `ESLOG` on `$.global`; the
+TypeScript/Node core exports `createLogger` and sink factories as modules.
+`ESLOG.jsx` and `vendor-eslog.js` deliberately do **not** duplicate ESON:
+load `eson/dist/ESON.jsx` first when using those artifacts.
+
+For dependency-complete delivery, evaluate only the composed artifact:
+
+```jsx
+$.evalFile(File("/path/to/ESLOG.accel.min.jsx"));
+
+var log = ESLOG.createLogger({
+  format: "jsonl",
+  sinks: [ESLOG.createMemorySink(32)]
+});
+```
+
+ESPACK v2 resolves and activates `ESB64`, then `ESON`, then `ESLOG`
+inside that one file. Callers do not preload sibling libraries and no nested
+ESPACK loader is emitted. The composition is live-proven by
+`npm run composition-live` after clearing all three globals first.
 
 ---
 
