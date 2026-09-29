@@ -159,8 +159,8 @@ ESLOG checks the numeric threshold at the start of each level method. A disabled
 |---|---:|---|---|
 | `dist/ESLOG.jsx` | 12,578 B | Requires an already-active ESON facade | Readable standalone/debug use |
 | `dist/vendor-eslog.js` | 12,578 B | Requires an already-active ESON facade | Inclusion in an existing ESON-enabled generated bundle |
-| `dist/ESLOG.accel.jsx` | 273,151 B | ESPACK v2 resolves `ESB64 -> ESON -> ESLOG` and includes ESON's optional native capability | Single-file production distribution with no sibling preload |
-| `dist/ESLOG.accel.min.jsx` | 238,027 B | Same composed dependency graph, conservatively minified after composition | Smaller single-file production distribution |
+| `dist/ESLOG.accel.jsx` | 274,222 B | ESPACK v2 resolves `ESB64 -> ESON -> ESLOG` and includes ESON's optional native capability | Single-file production distribution with no sibling preload |
+| `dist/ESLOG.accel.min.jsx` | 238,376 B | Same composed dependency graph, conservatively minified after composition | Smaller single-file production distribution |
 | `dist/ESLOG.facade.jsx` | 12,663 B | Loader-free library node; requires ESPAK composition control plane | Input to a larger ESPACK composition |
 | `dist/ESLOG.manifest.json` | 267,597 B | Byte/provenance manifest for the complete transitive graph | Build/composition input, not a runtime include |
 

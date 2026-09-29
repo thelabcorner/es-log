@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "kind": "eslog-composition-live",
-  "capturedAt": "2026-09-29T18:53:52.539Z",
+  "capturedAt": "2026-09-29T19:01:40.283Z",
   "transport": "ESTC COMTool V2 Node SDK",
   "artifact": {
     "file": "dist/ESLOG.accel.jsx",
