@@ -13,7 +13,7 @@ var PROBE = join(ROOT, '.eslog-live-probe.jsx');
 var COM = createComToolRunner();
 
 async function runTool(args) {
-  try { return await COM.runText(args, { timeoutMs: 180000 }); }
+  try { return await COM.run(args, { timeoutMs: 180000 }); }
   catch (error) { return null; }
 }
 
@@ -26,13 +26,10 @@ if (!existsSync(VENDOR)) {
   console.error('[eslog-live-verify] build first (npm run build)');
   process.exitCode = 1;
 } else {
-  var statusText = await runTool(['status', '--no-launch']);
-  if (statusText === null) {
+  var status = await runTool(['status', '--no-launch']);
+  if (status === null) {
     skip('COMTool V2 could not query a running Illustrator instance');
   } else {
-    var status;
-    try { status = JSON.parse(statusText.trim()); }
-    catch (error) { status = null; }
     if (!status || !status.ok || !status.result) {
       skip('Illustrator status is unavailable without launch permission');
     } else {
@@ -84,12 +81,10 @@ if (!existsSync(VENDOR)) {
         if (output === null) {
           skip('COMTool V2 eval did not return an engine result');
         } else {
-          var envelope;
-          try { envelope = JSON.parse(output.trim()); }
-          catch (error) { envelope = null; }
-          var result = envelope && envelope.result && (envelope.result.result || envelope.result);
-          if (!envelope || !envelope.ok || !result) {
-            skip('COMTool V2 returned an unavailable engine result');
+          var result = output.result && (output.result.result || output.result);
+          if (!output.ok || !result) {
+            console.error('[eslog-live-verify] FAIL: ' + JSON.stringify(output));
+            process.exitCode = 1;
           } else {
             var failed = [];
             var keys = ['global', 'esonLoaded', 'esonUnpatchedJson', 'filteredNoWork', 'oneTimestamp', 'sharedRecord', 'sharedText', 'sortedFields', 'escapedNulAndNewline', 'appendOnce', 'errorIsolation'];
