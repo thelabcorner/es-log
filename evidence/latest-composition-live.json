@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "kind": "eslog-composition-live",
+  "capturedAt": "2026-09-29T18:53:52.539Z",
+  "transport": "ESTC COMTool V2 Node SDK",
+  "artifact": {
+    "file": "dist/ESLOG.accel.jsx",
+    "sha256": "20ce5d18c1fb4bc9567b046c479d0c7be06f44f8ab94ae9875cd5193f5619e95"
+  },
+  "illustrator": "30.6.0",
+  "extendScript": "4.5.6",
+  "activationOrder": [
+    "esb64@1.3.0",
+    "eson@1.3.0",
+    "eslog@0.2.0"
+  ],
+  "esonNative": true,
+  "result": "PASS"
+}
